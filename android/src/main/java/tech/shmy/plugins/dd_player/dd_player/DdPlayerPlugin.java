@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.content.Context;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.session.MediaController;
 import android.os.Build;
 import android.util.Rational;
 import android.view.Window;
@@ -108,6 +110,22 @@ public class DdPlayerPlugin implements MethodCallHandler {
         window.setAttributes(localLayoutParams);
         return val;
     }
+
+
+/*
+    private int setPlaySpeed(double speed) {
+        MediaPlayer player =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (player.isPlaying()) {
+                player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
+            } else {
+                player.setPlaybackParams(player.getPlaybackParams().setSpeed(speed));
+                player.pause();
+            }
+        }
+    }
+*/
+
 
     private int getCurrentVolume() {
         //当前音量

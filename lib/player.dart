@@ -15,6 +15,7 @@ class DdPlayer extends StatefulWidget {
   bool enableDLNA;
   bool enablePip;
   bool enableFixed;
+  double speed;
 
   DdPlayer({
     Key key,
@@ -26,6 +27,7 @@ class DdPlayer extends StatefulWidget {
     this.enablePip = false,
     this.videoPlayerController,
     this.enableFixed = false,
+    this.speed = 1.0,
   }) : super(key: key);
 
   @override
@@ -45,6 +47,7 @@ class _DdPlayer extends State<DdPlayer> {
       enableDLNA: widget.enableDLNA,
       enablePip: widget.enablePip,
       enableFixed: widget.enableFixed,
+      speed: widget.speed,
     );
   }
 
@@ -64,12 +67,15 @@ class _DdPlayer extends State<DdPlayer> {
     _videoPlayerController = VideoPlayerController.network(widget.url)
       ..initialize().then((_) {
         setNormallyOn();
-        _videoPlayerController.play();
+        _videoPlayerController.play().then((_){
+          _videoPlayerController.setSpeed(widget.speed);
+        });
       });
   }
 
   void initState() {
     _buildPlayer();
+
     super.initState();
   }
 

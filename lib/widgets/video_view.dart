@@ -22,6 +22,7 @@ class VideoView extends StatefulWidget {
   bool enablePip;
   bool enableFixed;
   String title;
+  double speed;
 
   VideoView({
     Key key,
@@ -33,6 +34,7 @@ class VideoView extends StatefulWidget {
     this.enableDLNA = false,
     this.enablePip = false,
     this.enableFixed = false,
+    this.speed,
   }) : super(key: key);
 
   @override
@@ -280,6 +282,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       enableDLNA: _enableDLNA,
       enablePip: _enablePip,
       enableFixed: false,
+      speed: widget.speed,
     );
   }
 
@@ -871,7 +874,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
         volume = await DdPlayerVolume.decrementVolume();
       }
     } else {
-      while(volume < _maxVolume) {
+      while(volume < _maxVolume/2) {
         volume = await DdPlayerVolume.incrementVolume();
       }
     }
