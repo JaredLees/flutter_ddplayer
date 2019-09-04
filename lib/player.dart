@@ -7,6 +7,7 @@ import 'package:video_player/video_player.dart';
 
 
 class DdPlayer extends StatefulWidget {
+  String title;
   String url;
   Widget thumbnail;
   Function listener;
@@ -18,6 +19,7 @@ class DdPlayer extends StatefulWidget {
   DdPlayer({
     Key key,
     @required this.url,
+    this.title,
     this.thumbnail,
     this.listener,
     this.enableDLNA = false,
@@ -36,6 +38,7 @@ class _DdPlayer extends State<DdPlayer> {
 
   Widget build(BuildContext context) {
     return VideoView(
+      title: widget.title,
       controller: videoPlayerController != null ? videoPlayerController : _videoPlayerController,
       thumbnail: widget.thumbnail,
       listener: widget.listener,

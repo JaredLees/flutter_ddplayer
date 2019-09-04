@@ -21,9 +21,11 @@ class VideoView extends StatefulWidget {
   bool enableDLNA;
   bool enablePip;
   bool enableFixed;
+  String title;
 
   VideoView({
     Key key,
+    this.title,
     this.controller,
     this.thumbnail,
     this.listener,
@@ -81,6 +83,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
   bool _showVolumeInfo = false;
   bool _showPositionInfo = false;
   int _preLoadPosition = 0;
+  bool _isMute = false;
 
   bool _isBackgroundMode = false;
   WidgetsBindingObserver _widgetsBindingObserver;
@@ -269,6 +272,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
 
   Widget _buildFullScreenVideoView() {
     return VideoView(
+      title: widget.title,
       controller: _videoPlayerController,
       isFullScreenMode: true,
       thumbnail: _thumbnail,
@@ -714,7 +718,18 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          _buildControlIconButton(Icons.arrow_back, _backTouched),
+          Row(
+            children: <Widget>[
+              _buildControlIconButton(Icons.chevron_left, _backTouched),
+              Padding(
+                padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                child: Text(
+                  "${ widget.title==null ? '未知' : widget.title }",
+                  style: TextStyle(color: Colors.white, fontSize: _isFullScreenMode ? 18.0 : 14.0),
+                ),
+              )
+            ],
+          ),
           Row(
             children: <Widget>[
               // Text(_enableDLNA.toString(), style: TextStyle(color: Colors.white),),
@@ -772,8 +787,8 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
                     onChanged: (d) {
                       _seekTo(d);
                     },
-                    activeColor: Colors.white,
-                    inactiveColor: Colors.white54,
+                    activeColor: Colors.grey,
+                    inactiveColor: Colors.white,
                   ),
                 ),
               ),
@@ -782,6 +797,9 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
               _buildSliderLabel(_formatDuration),
             ],
           )),
+
+          _buildControlIconButton(_isMute ? Icons.volume_off : Icons.volume_up, _muteVoice),
+
           !_isFullScreenMode
               ? _buildControlIconButton(Icons.fullscreen, _switchFullMode)
               : _emptyWidget()
@@ -843,6 +861,21 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       return;
     }
     Navigator.of(context).pop();
+  }
+
+  Future _muteVoice() async {
+    _isMute = !_isMute;
+    int volume = await DdPlayerVolume.currentVolume;
+    if(_isMute) {
+      while(volume > 0 ) {
+        volume = await DdPlayerVolume.decrementVolume();
+      }
+    } else {
+      while(volume < _maxVolume) {
+        volume = await DdPlayerVolume.incrementVolume();
+      }
+    }
+    setState(() {});
   }
 
   void _switchFullMode() {
