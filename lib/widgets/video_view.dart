@@ -34,7 +34,7 @@ class VideoView extends StatefulWidget {
     this.enableDLNA = false,
     this.enablePip = false,
     this.enableFixed = false,
-    this.speed,
+    this.speed=1.0,
   }) : super(key: key);
 
   @override
@@ -86,6 +86,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
   bool _showPositionInfo = false;
   int _preLoadPosition = 0;
   bool _isMute = false;
+  bool _doubleSpeed = false;
 
   bool _isBackgroundMode = false;
   WidgetsBindingObserver _widgetsBindingObserver;
@@ -802,6 +803,25 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
           )),
 
           _buildControlIconButton(_isMute ? Icons.volume_off : Icons.volume_up, _muteVoice),
+
+          GestureDetector(child: Padding(
+              padding: EdgeInsets.only(left: 5.0, right: 5.0),
+              child: new Container(
+                width: 24.0,
+                child: Text(_doubleSpeed ? "x2" : "x1", style: TextStyle(fontSize: _isFullScreenMode ? 18.0 : 15.0, color: Colors.white),),
+              ),
+              ),
+            onTap: (){
+              setState(() {
+                _doubleSpeed = !_doubleSpeed;
+                if(_doubleSpeed) {
+                  _videoPlayerController.setSpeed(2.0);
+                } else {
+                  _videoPlayerController.setSpeed(1.0);
+                }
+              });
+            },
+          ),
 
           !_isFullScreenMode
               ? _buildControlIconButton(Icons.fullscreen, _switchFullMode)

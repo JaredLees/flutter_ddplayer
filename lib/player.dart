@@ -27,7 +27,6 @@ class DdPlayer extends StatefulWidget {
     this.enablePip = false,
     this.videoPlayerController,
     this.enableFixed = false,
-    this.speed = 1.0,
   }) : super(key: key);
 
   @override
@@ -47,7 +46,6 @@ class _DdPlayer extends State<DdPlayer> {
       enableDLNA: widget.enableDLNA,
       enablePip: widget.enablePip,
       enableFixed: widget.enableFixed,
-      speed: widget.speed,
     );
   }
 
