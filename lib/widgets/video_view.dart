@@ -5,6 +5,7 @@ import 'package:dd_player/utils/overlay.dart';
 import 'package:dd_player/channel/screen.dart';
 import 'package:dd_player/utils/lifecycle_event_handler.dart';
 import 'package:dd_player/channel/volume.dart';
+import 'package:dd_player/utils/pair.dart';
 import 'package:dd_player/widgets/fixed_video.dart';
 import 'package:dd_player/widgets/player_popup_animated.dart';
 import 'package:dd_player/widgets/slide_transition_bar.dart';
@@ -75,6 +76,9 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
   List<dynamic> _devices = [];
   PopupType _popupType = PopupType.none;
 
+  List<Pair<String, double>> speeds = [new Pair("x1", 1.0), new Pair("x1.5", 1.5), new Pair("x2", 2.0)];
+  int speedSelected = 0;
+
   double _panStartX = 0.0;
   double _panStartY = 0.0;
   int _lastSourceTimeStamp = 0;
@@ -86,7 +90,6 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
   bool _showPositionInfo = false;
   int _preLoadPosition = 0;
   bool _isMute = false;
-  bool _doubleSpeed = false;
 
   bool _isBackgroundMode = false;
   WidgetsBindingObserver _widgetsBindingObserver;
@@ -815,17 +818,16 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
               padding: EdgeInsets.only(left: 5.0, right: 5.0),
               child: new Container(
                 width: 24.0,
-                child: Text(_doubleSpeed ? "x2" : "x1", style: TextStyle(fontSize: _isFullScreenMode ? 18.0 : 15.0, color: Colors.white),),
+                child: Text(speeds[speedSelected].key, style: TextStyle(fontSize: _isFullScreenMode ? 18.0 : 15.0, color: Colors.white),),
               ),
               ),
             onTap: (){
               setState(() {
-                _doubleSpeed = !_doubleSpeed;
-                if(_doubleSpeed) {
-                  _videoPlayerController.setSpeed(2.0);
-                } else {
-                  _videoPlayerController.setSpeed(1.0);
+                speedSelected ++;
+                if(speedSelected >= speeds.length) {
+                  speedSelected = 0;
                 }
+                _videoPlayerController.setSpeed(speeds[speedSelected].value);
               });
             },
           ),
