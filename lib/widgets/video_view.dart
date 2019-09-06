@@ -785,14 +785,21 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
               Expanded(
                 child: Container(
                   padding: EdgeInsets.all(0.0),
-                  child: Slider(
-                    value: _position,
-                    max: _duration,
-                    onChanged: (d) {
-                      _seekTo(d);
-                    },
-                    activeColor: Colors.grey,
-                    inactiveColor: Colors.white,
+                  child: SliderTheme(
+                      data: SliderThemeData(
+                        thumbColor: Colors.white,
+                        inactiveTickMarkColor: Colors.white,
+                        activeTrackColor: Colors.teal,
+                      ),
+                      child: Slider(
+                        value: _position,
+                        max: _duration,
+                        onChanged: (d) {
+                          _seekTo(d);
+                        },
+                        //activeColor: Colors.grey,
+                        //inactiveColor: Colors.white,
+                      )
                   ),
                 ),
               ),
