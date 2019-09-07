@@ -817,7 +817,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
           GestureDetector(child: Padding(
               padding: EdgeInsets.only(left: 5.0, right: 5.0),
               child: new Container(
-                width: 30.0,
+                width: _isFullScreenMode ? 40 : 30.0,
                 child: Text(speeds[speedSelected].key, style: TextStyle(fontSize: _isFullScreenMode ? 18.0 : 15.0, color: Colors.white),),
               ),
               ),
