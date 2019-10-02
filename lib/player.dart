@@ -16,6 +16,7 @@ class DdPlayer extends StatefulWidget {
   bool enablePip;
   bool enableFixed;
   double speed;
+  Duration initPosition;
 
   DdPlayer({
     Key key,
@@ -27,6 +28,7 @@ class DdPlayer extends StatefulWidget {
     this.enablePip = false,
     this.videoPlayerController,
     this.enableFixed = false,
+    this.initPosition,
   }) : super(key: key);
 
   @override
@@ -67,8 +69,14 @@ class _DdPlayer extends State<DdPlayer> {
         setNormallyOn();
         _videoPlayerController.play().then((_){
           _videoPlayerController.setSpeed(widget.speed);
+
+          if(widget.initPosition != null) {
+            _videoPlayerController.seekTo(widget.initPosition);
+          }
         });
       });
+
+    widget.videoPlayerController = _videoPlayerController;
   }
 
   void initState() {

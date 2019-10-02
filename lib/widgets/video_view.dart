@@ -101,7 +101,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       }
       if (_videoPlayerController.value.hasError &&
           !_videoPlayerController.value.isPlaying) {
-        return _buildWrapPop(_buildMask(errMsg: "加载失败,请稍后再试!"));
+        return _buildWrapPop(_buildMask(errMsg: "加载失败,请稍后再试!")); //TODO 重试
       }
       return _buildWrapPop(_buildMask(isLoading: true));
     }
