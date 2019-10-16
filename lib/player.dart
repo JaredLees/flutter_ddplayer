@@ -73,10 +73,10 @@ class _DdPlayer extends State<DdPlayer> {
           if(widget.initPosition != null) {
             _videoPlayerController.seekTo(widget.initPosition);
           }
+
+          widget.videoPlayerController = _videoPlayerController;
         });
       });
-
-    widget.videoPlayerController = _videoPlayerController;
   }
 
   void initState() {
