@@ -8,7 +8,7 @@ const EventChannel eventChannel =
 const EventChannel(CHANNEL_NAME + "event_channel");
 
 
-enum PopupType { none, dlna, other }
+enum PopupType { none, dlna, series, other }
 
 void setNormallyOn() async {
   print("==========setNormallyOn===========");

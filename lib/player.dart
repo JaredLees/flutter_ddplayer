@@ -1,5 +1,6 @@
 import 'package:dd_player/defs.dart';
 import 'package:dd_player/widgets/video_view.dart';
+import 'package:dd_player/utils/pageUtils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -17,6 +18,10 @@ class DdPlayer extends StatefulWidget {
   bool enableFixed;
   double speed;
   Duration initPosition;
+  int nowchoice;
+  PageUtils pageUtils;
+  Function beforeExitPlayer;
+  Function nextSeries;
 
   DdPlayer({
     Key key,
@@ -29,6 +34,10 @@ class DdPlayer extends StatefulWidget {
     this.videoPlayerController,
     this.enableFixed = false,
     this.initPosition,
+    this.beforeExitPlayer,
+    this.nextSeries,
+    this.pageUtils,
+    this.nowchoice,
   }) : super(key: key);
 
   @override
@@ -48,6 +57,23 @@ class _DdPlayer extends State<DdPlayer> {
       enableDLNA: widget.enableDLNA,
       enablePip: widget.enablePip,
       enableFixed: widget.enableFixed,
+      beforeExitPlayer: widget.beforeExitPlayer,
+      nextSeries: (nowchoice){
+        setState(() {
+          widget.nextSeries(nowchoice);
+          widget.nowchoice = nowchoice;
+          print("nowchoice = ${nowchoice}");
+        });
+      },
+      pageUtils: widget.pageUtils,
+      nowchoice: widget.nowchoice == null ? 0 : widget.nowchoice,
+      sonValue: (controller, title, speed){
+        setState(() {
+          widget.videoPlayerController = controller;
+          widget.title = title;
+          widget.speed = speed;
+        });
+      },
     );
   }
 
@@ -66,6 +92,7 @@ class _DdPlayer extends State<DdPlayer> {
     }
     _videoPlayerController = VideoPlayerController.network(widget.url)
       ..initialize().then((_) {
+        widget.videoPlayerController = _videoPlayerController;
         setNormallyOn();
         _videoPlayerController.play().then((_){
           _videoPlayerController.setSpeed(widget.speed);
@@ -73,8 +100,6 @@ class _DdPlayer extends State<DdPlayer> {
           if(widget.initPosition != null) {
             _videoPlayerController.seekTo(widget.initPosition);
           }
-
-          widget.videoPlayerController = _videoPlayerController;
         });
       });
   }

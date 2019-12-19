@@ -19,7 +19,7 @@ class PlayerPopupAnimated extends AnimatedWidget {
       bottom: 0.0,
       width: width,
       child: Container(
-        color: Colors.teal,
+        color: Colors.black12,
         child: child,
       ),
     );

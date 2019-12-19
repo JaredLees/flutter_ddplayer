@@ -5,7 +5,9 @@ import 'package:dd_player/utils/overlay.dart';
 import 'package:dd_player/channel/screen.dart';
 import 'package:dd_player/utils/lifecycle_event_handler.dart';
 import 'package:dd_player/channel/volume.dart';
+import 'package:dd_player/utils/pageUtils.dart';
 import 'package:dd_player/utils/pair.dart';
+import 'package:dd_player/utils/series.dart';
 import 'package:dd_player/widgets/fixed_video.dart';
 import 'package:dd_player/widgets/player_popup_animated.dart';
 import 'package:dd_player/widgets/slide_transition_bar.dart';
@@ -13,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:flutter_dlna/flutter_dlna.dart';
+import 'package:dd_player/player.dart';
 
 class VideoView extends StatefulWidget {
   VideoPlayerController controller;
@@ -22,8 +25,14 @@ class VideoView extends StatefulWidget {
   bool enableDLNA;
   bool enablePip;
   bool enableFixed;
+  bool allfullScreen;
   String title;
   double speed;
+  Function beforeExitPlayer;
+  Function nextSeries;
+  PageUtils pageUtils;
+  int nowchoice;
+  Function sonValue;
 
   VideoView({
     Key key,
@@ -31,11 +40,17 @@ class VideoView extends StatefulWidget {
     this.controller,
     this.thumbnail,
     this.listener,
+    this.allfullScreen = false,
     this.isFullScreenMode = false,
     this.enableDLNA = false,
     this.enablePip = false,
     this.enableFixed = false,
     this.speed=1.0,
+    this.beforeExitPlayer,
+    this.nextSeries,
+    this.pageUtils,
+    this.nowchoice,
+    this.sonValue,
   }) : super(key: key);
 
   @override
@@ -93,6 +108,8 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
 
   bool _isBackgroundMode = false;
   WidgetsBindingObserver _widgetsBindingObserver;
+
+  Function pickSeriesListener;
 
   Widget build(BuildContext context) {
     if (_videoPlayerController?.value != null) {
@@ -224,6 +241,12 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       _videoPlayerController
         ..addListener(listener)
         ..setVolume(1.0);
+
+      pickSeriesListener = () {
+        checkNextSeries();
+      };
+
+      //_videoPlayerController.addListener(pickSeriesListener);
     }
     _widgetsBindingObserver = LifecycleEventHandler(cb: _lifecycleEventHandler);
     // 生命周期钩子
@@ -233,6 +256,27 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       _initPlatCode();
     });
     super.initState();
+  }
+
+  Future checkNextSeries() async {
+    if(_videoPlayerController != null && _videoPlayerController.value != null  && _videoPlayerController.value.initialized) {
+      Duration curPosition = await _videoPlayerController.position;
+      if(curPosition.inMilliseconds != null
+          && _videoPlayerController.value.duration != null
+          && _videoPlayerController.value.duration.inMilliseconds != null
+          && (curPosition.inMilliseconds >= _videoPlayerController.value.duration.inMilliseconds - 100)) {
+
+        print("${_videoPlayerController.toString()} 在检测播放位置...");
+
+        print("播放完成，准备播放下一集");
+        if(widget.nowchoice < widget.pageUtils.datas.length -1 ) {
+          setState(() {
+            widget.nowchoice ++;
+            pickSeries(widget.nowchoice);
+          });
+        }
+      }
+    }
   }
 
   void _didDispose() {
@@ -260,6 +304,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
     if (_videoPlayerController != null && !_isFullScreenMode) {
       _videoPlayerController.pause();
       _videoPlayerController.removeListener(listener);
+      //_videoPlayerController.removeListener(pickSeriesListener);
       _videoPlayerController.dispose();
       _videoPlayerController = null;
       unSetNormallyOn();
@@ -287,6 +332,12 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       enablePip: _enablePip,
       enableFixed: false,
       speed: widget.speed,
+      beforeExitPlayer: widget.beforeExitPlayer,
+      nextSeries: widget.nextSeries,
+      pageUtils: widget.pageUtils,
+      nowchoice: widget.nowchoice,
+      sonValue: widget.sonValue,
+      allfullScreen: widget.allfullScreen,
     );
   }
 
@@ -527,7 +578,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
                     bottom: 0.0,
                     child: Center(
                       child: AspectRatio(
-                        aspectRatio: _videoPlayerController.value.aspectRatio,
+                        aspectRatio: widget.allfullScreen ? MediaQuery.of(context).size.width / MediaQuery.of(context).size.height :  _videoPlayerController.value.aspectRatio,
                         child: _videoPlayerController == null
                             ? Container(
                                 color: Colors.black,
@@ -665,11 +716,19 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
           PlayerPopupAnimated(
             animation: _animation,
             width: _popupWidth,
-            child: _popupType == PopupType.dlna ? _buildDlna() : _emptyWidget(),
+            child: getPopupWidget(),
           ),
         ],
       ),
     );
+  }
+
+  Widget getPopupWidget(){
+    switch(_popupType){
+      case PopupType.dlna: return  _buildDlna() ;
+      case PopupType.series : return _buildSeries();
+      default : return _emptyWidget();
+    }
   }
 
 //  Widget _buildVideo() {
@@ -749,6 +808,17 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
               _enableDLNA
                   ? _buildControlIconButton(Icons.tv, _enterDlna, 20)
                   : _emptyWidget(),
+
+                  // 铺满全屏
+              _isFullScreenMode
+                  ? new Padding(padding: const EdgeInsets.only(left: 10, right: 10.0),
+                    child: _buildControlIconButton(Icons.settings_ethernet, (){
+                      setState(() {
+                        widget.allfullScreen = !widget.allfullScreen;
+                      });
+                    }, 20),
+              ) : _emptyWidget(),
+
 //              _isFullScreenMode
 //                  ? _buildControlIconButton(Icons.tv, _enterDlna, 20)
 //                  : _emptyWidget(),
@@ -781,6 +851,16 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
                   ? Icons.pause
                   : Icons.play_arrow,
               _switchPlayState),
+          _buildControlIconButton(Icons.skip_next, (){
+                setState(() {
+                  if(widget.nowchoice < widget.pageUtils.datas.length - 1) {
+                    setState(() {
+                      widget.nowchoice ++;
+                      pickSeries(widget.nowchoice);
+                    });
+                  }
+                });
+            }),
           Expanded(
               child: Row(
             children: <Widget>[
@@ -814,6 +894,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
 
           _buildControlIconButton(_isMute ? Icons.volume_off : Icons.volume_up, _muteVoice),
 
+          // 倍速
           GestureDetector(child: Padding(
               padding: EdgeInsets.only(left: 5.0, right: 5.0),
               child: new Container(
@@ -832,11 +913,129 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
             },
           ),
 
+          // 全屏下 选集
+          _isFullScreenMode
+              ? GestureDetector(child: Padding(
+                  padding: EdgeInsets.only(left: 5.0, right: 5.0),
+                  child: new Container(
+                    width: _isFullScreenMode ? 40.0 : 30.0,
+                    child: Text("选集", style: TextStyle(fontSize: _isFullScreenMode ? 15.0 : 13.0, color: Colors.white),),
+                  ),
+                ),
+                  onTap: (){
+                    _enterSeries();
+                  },
+                )
+              : _emptyWidget(),
+
           !_isFullScreenMode
               ? _buildControlIconButton(Icons.fullscreen, _switchFullMode)
               : _emptyWidget()
         ],
       ),
+    );
+  }
+
+  void _enterSeries() async {
+    setState(() {
+      _popupType = PopupType.series;
+    });
+    _switchPopup();
+  }
+
+  Widget _buildSeries(){
+    return widget.pageUtils == null ? _emptyWidget() :
+    Container(
+      color: Colors.black12,
+
+      child: GridView.builder(
+          padding: const EdgeInsets.only(
+            top: 5.0,
+            left: 5.0,
+            right: 5.0,
+          ),
+          itemCount: widget.pageUtils.datas.length,
+          //SliverGridDelegateWithFixedCrossAxisCount 构建一个横轴固定数量Widget
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            //横轴元素个数
+              crossAxisCount: widget.pageUtils.datas.length < 4 ? 3 : 4,
+              //纵轴间距
+              mainAxisSpacing: 5.0,
+              //横轴间距
+              crossAxisSpacing: 5.0,
+              //子组件宽高长度比例
+              childAspectRatio: 1.2),
+          itemBuilder: (BuildContext context, int index) {
+            return new InkWell(
+              child: getItemContainer(widget.pageUtils.datas[index], widget.nowchoice == index),
+              onTap: (){
+                print("点击剧集：${index}");
+                _switchPopup();
+
+                if(widget.nowchoice < widget.pageUtils.datas.length - 1) {
+                  setState(() {
+                    pickSeries(index);
+                  });
+                }
+              },
+            );
+          },
+      ),
+    );
+  }
+
+  void pickSeries(int seriesIndex) {
+    widget.nowchoice = seriesIndex;
+
+    setState(() {
+      widget.title = widget.title.substring(0, widget.title.indexOf("-")+1)+ widget.pageUtils.datas[seriesIndex].title;
+
+      if (_videoPlayerController != null) {
+        _videoPlayerController.pause();
+        _videoPlayerController.seekTo(new Duration(seconds: 0));
+        //_videoPlayerController.removeListener(pickSeriesListener);
+        _videoPlayerController = null;
+      }
+      _videoPlayerController = VideoPlayerController.network(widget.pageUtils.datas[seriesIndex].url)
+      ..initialize().then((_) {
+        //_videoPlayerController.addListener(pickSeriesListener);
+        widget.controller = _videoPlayerController;
+        _videoPlayerController.play().then((_){
+          setState(() {
+            _videoPlayerController.setSpeed(widget.speed);
+          });
+        });
+      });
+
+      widget.sonValue(_videoPlayerController, widget.title, widget.speed);
+      widget.nextSeries(widget.nowchoice);
+    });
+  }
+
+  List<DropdownMenuItem<int>> getListData() {
+    List<DropdownMenuItem<int>> items=new List();
+
+    widget.pageUtils.pageDescMap.forEach((key, value){
+      items.add(new DropdownMenuItem(
+        child:new Text(value, style: new TextStyle(
+          fontSize: 13.0,
+        ),),
+        value: key,
+      ));
+    });
+
+    return items;
+  }
+
+  Widget getItemContainer(Series series, bool isSelected) {
+    return Container(
+      alignment: Alignment.center,
+      child: Text(
+        series.title,
+
+        style: TextStyle(color: Colors.black, fontSize: 12.0),
+      ),
+      color: isSelected ? Colors.orangeAccent : Colors.white70,
     );
   }
 
@@ -877,9 +1076,12 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
     _initDlna();
   }
 
-  void _exitFullScreen() {
+  Future<void> _exitFullScreen() async {
     _hidePopup();
     Navigator.of(context).pop();
+
+    widget.sonValue(_videoPlayerController, widget.title, widget.speed);
+
     // 退出全屏
     SystemChrome.setEnabledSystemUIOverlays(
         [SystemUiOverlay.bottom, SystemUiOverlay.top]);
@@ -888,6 +1090,11 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
   }
 
   void _backTouched() {
+
+    if(widget.beforeExitPlayer != null) {
+      widget.beforeExitPlayer(_isFullScreenMode);
+    }
+
     if (_isFullScreenMode) {
       _switchFullMode();
       return;
@@ -990,6 +1197,7 @@ class _VideoView extends State<VideoView> with TickerProviderStateMixin {
       _videoPlayerController.play();
       _showControls();
     }
+    setState(() {});
   }
 
   void _seekTo(double seconds) {
